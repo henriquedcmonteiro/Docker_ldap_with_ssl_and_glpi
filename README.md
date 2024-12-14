@@ -193,3 +193,88 @@ Podemos checar se esta funcionando com o comando:
 
 <h2>Utilizando os scripts</h2>
 
+<h2>GLPI com docker</h2>
+
+GLPI com docker-compose
+
+Vamos criar uma pasta onde vamos armazenar o nosso docker-compose, separada da pasta que esta o docker-compose do ldap.
+
+`vim docker-compose.yml`
+
+```
+version: "3.2"
+
+services:
+  # MariaDB Container
+  mariadb:
+    image: mariadb:10.7
+    container_name: mariadb-glpi
+    hostname: mariadb-glpi
+    volumes:
+      - mariadb_glpi:/var/lib/mysql
+    env_file:
+      - ./mariadb.env
+    restart: always
+
+  # GLPI Container
+  glpi:
+    image: diouxx/glpi
+    container_name: glpi
+    hostname: glpi
+    ports:
+      - "8082:80"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - glpi_conf:/var/www/html/glpi
+    environment:
+      - TIMEZONE=Brazil/Saopaulo
+    restart: always
+
+volumes:
+  mariadb-glpi:
+    external: true
+  glpi_conf:
+    external: true
+
+networks:
+  glpi-ldap:
+    external: true
+```
+    
+Vamos criar o nosso container.
+
+`docker-compose up -d`
+
+Note, as senhas vão estar armazenadas em um arquivo .env com o nome de mariadb.env.
+
+`vim mariadb.env`
+
+```
+MARIADB_ROOT_PASSWORD=diouxx
+MARIADB_DATABASE=glpidb
+MARIADB_USER=glpi_user
+MARIADB_PASSWORD=glpi
+
+```
+
+O procedimento de instalação são apenas nexts, vamos seguir direto para a parte de configuração do LDAP com o GLPI.
+
+Vamos clicar em configuração > autenticação > ldap.
+
+![image](https://github.com/user-attachments/assets/87de2f39-a1f3-481c-b15a-3886a6b10e72)
+
+Na aba de configuração do LDAP passamos o nome desejado, o servidor vamos utilizar o ldaps para ser uma conexão ssl junto com o nome do container, utilizaremos bind junto com a senha que determinamos com o SSHA, marcamos também a porta 638 padrão para ldaps.
+
+Com isso a conexão fica funcional, você pode testar seguindo os passos abaixo.
+
+![ac2902309877265c9554df10231252b3](https://github.com/user-attachments/assets/0176cc18-fe43-49cf-a6d4-1272be508b44)
+
+![7cd83c1465d386f1c0deab73602407be](https://github.com/user-attachments/assets/5267d85d-b281-40b5-ac77-21a025f878ba)
+
+Quando pesquisar ele já vai fazer o reconhecimento com o ldap, buscando os usuarios cadastrados através dos scripts junto do ldap.
+
+![image](https://github.com/user-attachments/assets/5c7d1009-d131-4769-821d-d795dbe65653)
+
+
+
