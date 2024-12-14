@@ -28,7 +28,7 @@ if [ "$#" -ne 2 ]; then
 fi
 
 GROUP_NAME="$1"
-MEMBER="$2,ou=users,dc=djsystem,dc=local"  # Ajuste o DN conforme necessário
+MEMBER="$2,ou=users,dc=empresa,dc=local"  # Ajuste o DN conforme necessário
 
 # Função para verificar se o usuário existe no LDAP
 does_user_exist() {
@@ -38,7 +38,7 @@ does_user_exist() {
 
 # Função para verificar se o membro está no grupo
 is_member_in_group() {
-    GROUP_DN="cn=$GROUP_NAME,ou=groups,dc=djsystem,dc=local"
+    GROUP_DN="cn=$GROUP_NAME,ou=groups,dc=empresa,dc=local"
     ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$GROUP_DN" "(memberUid=$MEMBER)" | grep -q "memberUid: $MEMBER"
     return $?
 }
