@@ -2,8 +2,8 @@
 
 # Configurações LDAP
 LDAP_SERVER="ldaps://ldap-server"
-LDAP_ADMIN_DN="cn=admin,dc=djsystem,dc=local"
-BASE_DN="ou=groups,dc=djsystem,dc=local"
+LDAP_ADMIN_DN="cn=admin,dc=empresa,dc=local"
+BASE_DN="ou=groups,dc=empresa,dc=local"
 
 # Função para exibir mensagens de erro
 function error_exit() {
