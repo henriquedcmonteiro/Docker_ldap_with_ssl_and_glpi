@@ -16,7 +16,7 @@ read -s -p "Digite a senha do administrador LDAP: " LDAP_ADMIN_PASS
 echo
 
 # Validar a senha fornecida
-ldapsearch -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "BASE_DN" > /dev/null 2>&1
+ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" > /dev/null 2>&1
 if [[ $? -ne 0 ]]; then
     error_exit "Senha do administrador LDAP incorreta."
 fi
@@ -28,13 +28,13 @@ if [[ -z "$USERNAME" ]]; then
 fi
 
 # Verificar se o usuário existe no LDAP
-USER_DN= $(ldapsearch -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "LDAP_ADMIN_PASS" -b "BASE_DN" "(uid=$USERNAME)" dn | awk '/dn: / {print $2}')
+USER_DN=$(ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" "uid=$USERNAME" dn | awk '/dn: / {print $2}')
 if [[ -z "$USER_DN" ]]; then
     error_exit "Usuário '$USERNAME' não encontrado no LDAP."
 fi
 
 # Verificar o loginShell atual do usuário
-CURRENT_SHELL=$(ldapsearch -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "LDAP_ADMIN_PASS" -b "$USER_DN" loginShell | awk '/loginShell: / {print $2}')
+CURRENT_SHELL=$(ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$USER_DN" loginShell | awk '/loginShell: / {print $2}')
 if [[ "$CURRENT_SHELL" == "/bin/bash" ]]; then
     echo "Usuário '$USERNAME' já está ativo."
     exit 0
@@ -46,6 +46,7 @@ while true; do
     echo
     read -s -p "Confirme a nova senha: " PASSWORD_CONFIRM
     echo
+
     if [[ "$PASSWORD" == "$PASSWORD_CONFIRM" ]]; then
         break
     else
@@ -54,7 +55,7 @@ while true; do
 done
 
 # Gerar o hash da nova senha
-PASSWORD_HASH= $(slappasswd -s "$PASSWORD")
+PASSWORD_HASH=$(slappasswd -s "$PASSWORD")
 if [[ $? -ne 0 ]]; then
     error_exit "Erro ao gerar o hash da senha."
 fi
@@ -65,6 +66,7 @@ dn: $USER_DN
 changetype: modify
 replace: loginShell
 loginShell: /bin/bash
+-
 replace: userPassword
 userPassword: $PASSWORD_HASH
 EOF
@@ -75,7 +77,7 @@ echo "LDIF gerado para reativação do usuário:"
 echo "$LDIF"
 
 # Aplicar as alterações no LDAP
-echo "$LDIF" | ldapmodify -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "LDAP_ADMIN_PASS"
+echo "$LDIF" | ldapmodify -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS"
 if [[ $? -ne 0 ]]; then
     error_exit "Erro ao reativar o usuário '$USERNAME' no LDAP."
 fi
