@@ -16,7 +16,7 @@ read -s -p "Digite a senha do administrador LDAP: " LDAP_ADMIN_PASS
 echo
 
 # Validar a senha fornecida
-ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" > /dev/null 2>&1
+ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" > /dev/null 2>&1
 if [[ $? -ne 0 ]]; then
     error_exit "Senha do administrador LDAP incorreta."
 fi
@@ -30,7 +30,7 @@ fi
 # Verificar se o grupo existe
 GROUP_DN="cn=$GROUPNAME,$GROUP_BASE_DN"
 if ! ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$GROUP_BASE_DN" "cn=$GROUPNAME" | grep -q "dn:"; then
-    error_exit "O grupo '$GROUPNAME' não existe no LDAP."
+    error_exit "Erro: O grupo '$GROUPNAME' não existe no LDAP."
 fi
 
 # Confirmar remoção
@@ -47,3 +47,4 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "Grupo '$GROUPNAME' removido com sucesso!"
+
