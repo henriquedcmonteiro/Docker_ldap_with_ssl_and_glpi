@@ -16,7 +16,7 @@ read -s -p "Digite a senha do administrador LDAP: " LDAP_ADMIN_PASS
 echo
 
 # Validar a senha fornecida
-ldapsearch -x -H "LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" > /dev/null 2>&1
+ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" > /dev/null 2>&1
 if [[ $? -ne 0 ]]; then
     error_exit "Senha do administrador LDAP incorreta."
 fi
@@ -30,7 +30,6 @@ fi
 # Verificar se o usuário existe
 USER_DN="uid=$USERNAME,$BASE_DN"
 USER_EXIST=$(ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" "uid=$USERNAME" | grep -q "dn:")
-
 if [[ $? -ne 0 ]]; then
     error_exit "Erro: O usuário '$USERNAME' não foi encontrado no LDAP."
 fi
@@ -43,12 +42,13 @@ read -p "Digite o novo e-mail (exemplo: henrique.monteiro@empresa.com.br) [deixe
 
 # Solicitar nova senha caso necessário
 read -p "Deseja alterar a senha? (s/n): " ALTERAR_SENHA
-if [[ "$ALTERAR_SENHA" == "S" ]]; then
+if [[ "$ALTERAR_SENHA" == "s" || "$ALTERAR_SENHA" == "S" ]]; then
     while true; do
         read -s -p "Digite a nova senha: " PASSWORD
         echo
         read -s -p "Confirme a nova senha: " PASSWORD_CONFIRM
         echo
+
         if [[ "$PASSWORD" == "$PASSWORD_CONFIRM" ]]; then
             break
         else
@@ -73,22 +73,26 @@ if [[ -n "$CN" ]]; then
 cn: $CN
 "
 fi
+
 if [[ -n "$SN" ]]; then
     LDIF+="replace: sn
 sn: $SN
 "
 fi
+
 if [[ -n "$DISPLAYNAME" ]]; then
     LDIF+="replace: displayName
 displayName: $DISPLAYNAME
 "
 fi
+
 if [[ -n "$MAIL" ]]; then
     LDIF+="replace: mail
 mail: $MAIL
 "
 fi
-if [[ "$ALTERAR_SENHA" == "S" ]]; then
+
+if [[ "$ALTERAR_SENHA" == "s" || "$ALTERAR_SENHA" == "S" ]]; then
     LDIF+="replace: userPassword
 userPassword: $PASSWORD_HASH
 "
@@ -105,3 +109,4 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "Dados do usuário '$USERNAME' atualizados com sucesso!"
+
