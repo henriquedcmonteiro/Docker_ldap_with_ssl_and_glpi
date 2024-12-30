@@ -3,7 +3,7 @@
 # Configurações LDAP
 LDAP_SERVER="ldaps://ldap-server"
 LDAP_ADMIN_DN="cn=admin,dc=empresa,dc=local"
-BASE_DN="ou=groups,dc=empresa,dc=local"
+BASE_DN="ou=groups,dc=empresa,dc=local"  
 
 # Função para exibir mensagens de erro
 function error_exit() {
@@ -22,5 +22,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # Busca todos os grupos e seus GIDs
-ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" "(objectClass=posixGroup)" gidNumber cn | grep -E "cn:|gidNumber:" | paste - - | awk '{print $4 "\t" $2}'
+ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" \
+    -b "$BASE_DN" "(objectClass=posixGroup)" gidNumber cn | grep -E "cn:|gidNumber:" | \
+    paste - - | awk '{print $4 "\t" $2}'
 
