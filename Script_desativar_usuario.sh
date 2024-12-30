@@ -16,7 +16,7 @@ read -s -p "Digite a senha do administrador LDAP: " LDAP_ADMIN_PASS
 echo
 
 # Validar a senha fornecida
-ldapsearch -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "BASE_DN" > /dev/null 2>&1
+ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" > /dev/null 2>&1
 if [[ $? -ne 0 ]]; then
     error_exit "Senha do administrador LDAP incorreta."
 fi
@@ -28,7 +28,7 @@ if [[ -z "$USERNAME" ]]; then
 fi
 
 # Verificar se o usuário existe
-USER_DN=$(ldapsearch -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "LDAP_ADMIN_PASS" -b "BASE_DN" "(uid=$USERNAME)" dn | awk '/^dn: / {print $2}')
+USER_DN=$(ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" "uid=$USERNAME" | awk '/^dn: / {print $2}')
 if [[ -z "$USER_DN" ]]; then
     error_exit "Erro: O usuário '$USERNAME' não foi encontrado no LDAP."
 fi
@@ -39,6 +39,7 @@ dn: $USER_DN
 changetype: modify
 replace: loginShell
 loginShell: /usr/sbin/nologin
+-
 replace: userPassword
 userPassword: *
 EOF
@@ -49,7 +50,7 @@ echo "LDIF gerado:"
 echo "$LDIF"
 
 # Aplicar as alterações no LDAP
-echo "$LDIF" | ldapmodify -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "LDAP_ADMIN_PASS"
+echo "$LDIF" | ldapmodify -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS"
 if [[ $? -ne 0 ]]; then
     error_exit "Erro ao desativar o usuário no LDAP."
 fi
@@ -58,9 +59,8 @@ echo "Usuário $USERNAME desativado com sucesso!"
 
 # Opcional: Remover permissões ou vínculos em serviços relacionados
 echo "Removendo permissões do usuário em serviços vinculados..."
-# (ldapsearch -x -H "LDAP_SERVER" -D "LDAP_ADMIN_DN" -w "LDAP_ADMIN_PASS" -b "BASE_DN" "(uid=$USERNAME)" dn)
-
 # Exemplo: chamar scripts ou APIs para remoção
-./remove_user_from_service.sh "$USERNAME"
+# ./remove_user_from_service.sh "$USERNAME"
 
 echo "Processo concluído."
+
