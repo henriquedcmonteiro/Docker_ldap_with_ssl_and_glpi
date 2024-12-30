@@ -16,7 +16,7 @@ read -s -p "Digite a senha do administrador LDAP: " LDAP_ADMIN_PASS
 echo
 
 # Validar a senha fornecida
-ldapsearch -x -H "LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$USER_BASE_DN" > /dev/null 2>&1
+ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$BASE_DN" > /dev/null 2>&1
 if [[ $? -ne 0 ]]; then
     error_exit "Senha do administrador LDAP incorreta."
 fi
@@ -29,8 +29,8 @@ fi
 
 # Verificar se o usuário existe
 USER_DN="uid=$USERNAME,$USER_BASE_DN"
-if ! ldapsearch -x -H "LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$USER_BASE_DN" "uid=$USERNAME" | grep -q "dn: "; then
-    error_exit "Erro: O usuário '$USERNAME' não foi encontrado no LDAP."
+if ! ldapsearch -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS" -b "$USER_BASE_DN" "uid=$USERNAME" | grep -q "dn:"; then
+    error_exit "Erro: O usuário '$USERNAME' não existe no LDAP."
 fi
 
 # Solicitar e confirmar a nova senha
@@ -39,6 +39,7 @@ while true; do
     echo
     read -s -p "Confirme a nova senha: " PASSWORD_CONFIRM
     echo
+
     if [[ "$PASSWORD" == "$PASSWORD_CONFIRM" ]]; then
         break
     else
@@ -68,7 +69,8 @@ echo "$LDIF"
 # Alterar a senha no LDAP
 echo "$LDIF" | ldapmodify -x -H "$LDAP_SERVER" -D "$LDAP_ADMIN_DN" -w "$LDAP_ADMIN_PASS"
 if [[ $? -ne 0 ]]; then
-    error_exit "Erro ao alterar a senha do usuário '$USERNAME'."
+    error_exit "Erro ao alterar a senha do usuário '$USERNAME' no LDAP."
 fi
 
 echo "A senha do usuário '$USERNAME' foi alterada com sucesso!"
+
